@@ -1,0 +1,270 @@
+//===============================================
+//      ******Header Files******
+//===============================================
+#include "DragonFireSDK.h"
+#include <stdio.h>
+#include <time.h>
+//===============================================
+//   ******Grid /Linear/ :D ??******
+//===============================================
+#define BOX 16
+#define DATA 5
+
+const int posx		  = 0;  //postions x
+const int posy		  = 1;	//postion y
+const int imagenumber = 2;	//image number , that changes
+const int View		  = 3;  //image view handle
+const int id		  = 4;  //static number/ box's postion
+
+int Boxes[BOX][DATA]  = { 0 };
+int idarray[16];
+int temp[1][4];
+
+int fonthandle = FontAdd("Arial14Bold - FontMedium");
+//===============================================
+//			******Background******
+//===============================================
+struct BG
+{
+	int Posx;
+	int Posy;
+	int Image;
+	int View;
+}		Base;
+//===============================================
+//			 ******Functions******
+//===============================================
+//      ******Loading Background******
+//===============================================
+
+void LoadBase()
+{
+	Base.Posx  = 0;
+	Base.Posy  = 0;
+	Base.Image = ImageAdd("Assets/BG FL.png");
+	Base.View  = ViewAdd(Base.Image, Base.Posx, Base.Posy);
+}
+//===============================================
+//	   ******Pre-Loading postion X****** 
+//===============================================
+void Callibrate()
+{
+	for(int cal = 0; cal < BOX; cal++)
+	{
+		Boxes[cal][posx] = 20; //posx all to 20
+	}
+}
+//===============================================
+//		 ******Positioning Boxes******
+//===============================================
+void LoadBoxPos()
+{	
+	Callibrate();
+	int increment = 70; // 70 is the image length/width
+	int box;
+	for(box = 0; box < BOX; box++)
+	{
+		if (box <= 3)
+		{
+			if (box == 0)
+			{
+				Boxes[box][posx] = Boxes[box][posx] ; // 20 in box is at 1,5,9,13
+			}
+			else 
+			{
+				Boxes[box][posx] = Boxes[box][posx] + (increment * box) ;
+			}
+		
+			Boxes[box][posy] = 130 ;
+		}
+		else if (box > 3 && box <= 7)
+		{
+			if (box == 4)
+			{
+				Boxes[box][posx] = Boxes[box][posx] ;
+
+			} 
+			else 
+			{
+				Boxes[box][posx] = Boxes[box][posx] + (increment * (box - 4)  );
+			}
+			Boxes[box][posy] = 202 ;
+		}
+		else if (box > 7 && box <= 11)
+		{
+			if (box == 8)
+			{
+				Boxes[box][posx] = Boxes[box][posx] ;
+			} 
+			else 
+			{
+				Boxes[box][posx] = Boxes[box][posx] + (increment * (box - 8)  );
+			}
+			 
+			Boxes[box][posy] = 272 ; 
+		}
+
+		else if (box > 11 && box <= 15)
+		{
+			if (box == 12)
+			{
+				Boxes[box][posx] = Boxes[box][posx] ;
+			} 
+			else 
+			{
+				Boxes[box][posx] = Boxes[box][posx] + (increment * (box - 12)  ); //to stay in the limit 1-3
+			}
+			
+			Boxes[box][posy] = 342 ;
+		}
+	}
+}
+//===============================================
+//	******shuffling IDs and Images******
+//After you call shuffle() on the array, its contents will be randomly sorted numbers from 0-15.
+//===============================================
+void shuffle(int items[16])
+{
+	int i;
+	int rand1;
+	int rand2;
+	int temp;
+
+	RandomSetSeed(time(NULL));
+	for (i = 0; i < BOX; i++)
+		items[i]=i;
+
+	for (i = 0; i < 2000; ++i)
+	{
+		rand1 = Random(16);
+		rand2 = Random(16);
+
+		temp = items[rand1];
+		items[rand1] = items[rand2];
+		items[rand2] = temp;
+	}
+}
+//===============================================
+//   ******ID Implantation into core array******
+//	    ******Image implantaion too ******
+//===============================================
+void AssignIDxImageNumber()
+{
+    for (int box = 0; box < BOX; box++)
+    {	
+		Boxes[box][imagenumber] = idarray[box];
+		Boxes[box][id]		    = box; 
+	}
+}
+//===============================================
+//		     ******CheckBoxes******
+//===============================================
+bool CheckBoxes()
+{
+	for( int i = 0; i < BOX; i++ )
+	{
+		if( Boxes[i][imagenumber] != Boxes[i][id] )
+		{
+			return false;
+		}
+	}
+	return true;
+}
+void SwapBoxes(int box, int positionfactor)
+{
+
+	temp[0][0] = Boxes[box][imagenumber];
+	Boxes[box][2] = Boxes[box + positionfactor][imagenumber];
+	Boxes[box + positionfactor][imagenumber] = temp[0][0];
+
+
+	if(positionfactor == 1)
+	{
+		ViewSetxy(Boxes[box][View], Boxes[box + 1][posx], Boxes[box + 1][posy]);
+	}
+	if(positionfactor == 4)
+	{
+		ViewSetxy(Boxes[box][View], Boxes[box + 4][posx], Boxes[box + 4][posy]);
+	}
+	if(positionfactor == -1)
+	{
+		ViewSetxy(Boxes[box][View], Boxes[box - 1][posx], Boxes[box - 1][posy]);
+	}
+	if(positionfactor == -4)
+	{
+		ViewSetxy(Boxes[box][View], Boxes[box - 4][posx], Boxes[box - 4][posy]);
+	}
+
+}
+
+//===============================================
+//     ******OnTouch******
+//===============================================
+int OnTouch(int box ,int event,int x,int y)
+{
+	int posfactor;
+
+	if( Boxes[box + 1][imagenumber] == 15 )
+	{
+		posfactor = 1;
+		SwapBoxes(box, posfactor);
+	}
+	if( Boxes[box - 1][imagenumber] == 15 )
+	{
+		posfactor = -1;
+		SwapBoxes(box, posfactor);
+	}
+	if( Boxes[box + 4][imagenumber] == 15 )
+	{
+		posfactor = 4;
+		SwapBoxes(box, posfactor);
+	}
+	if( Boxes[box - 4][imagenumber] == 15 )
+	{
+		posfactor = -4;
+		SwapBoxes(box, posfactor);
+	}	
+	if (CheckBoxes()) 
+		ViewAdd("Assets/BG.png", 0, 0);
+
+	return 0;
+}
+//===============================================
+//		******Loading Images******
+//===============================================
+void LoadImages()
+{
+	char string[16];
+	for( int box = 0; box < BOX ; box++ )
+	{
+		sprintf_s(string,"Assets/%02d.png",idarray[box]);
+		Boxes[box][View] = ViewAdd(string, Boxes[box][posx], Boxes[box][posy],OnTouch, box );		
+	}	
+}
+//===============================================
+//		******The MAIN Function******
+//===============================================
+void AppMain()
+{
+	LoadBase();
+	LoadBoxPos();
+	shuffle(idarray);
+	AssignIDxImageNumber();
+	LoadImages();
+}
+//===============================================
+//      ******30 Fps Function******
+//===============================================
+void OnTimer()
+{
+}
+//===============================================
+//		    ******On Exit******
+//===============================================
+void AppExit()
+{
+ //RE-start may be 
+}
+//===============================================
+
+
